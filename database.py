@@ -6,8 +6,8 @@ class create_db:
     def __init__(self):
         
      self.table1 = "CREATE TABLE IF NOT EXISTS todo (task_id INTEGER PRIMARY KEY,task_name TEXT)"
-     self.table2 = "CREATE TABLE IF NOT EXISTS doing (row_id INTEGER PRIMARY KEY,taskID,time_in TEXT)"
-     self.table3 = "CREATE TABLE IF NOT EXISTS done (row_id INTEGER PRIMARY KEY,taskId,time_out TEXT)"
+     self.table2 = "CREATE TABLE IF NOT EXISTS doing (row_id INTEGER PRIMARY KEY,taskID INT,task_name TEXT,time_in TEXT)"
+     self.table3 = "CREATE TABLE IF NOT EXISTS done (row_id INTEGER PRIMARY KEY,taskId INT,task_name TEXT,time_out TEXT)"
      
      self.connection = None
      self.cursor = None
