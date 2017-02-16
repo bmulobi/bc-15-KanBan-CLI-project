@@ -2,6 +2,7 @@ import sqlite3 as lite
 import time
 
 
+
 class KanBanCommands:
     """Class defines all the required command handlers"""
        
@@ -15,7 +16,46 @@ class KanBanCommands:
         self.rows = None
         self.time_in = ''
         self.row_count = 0
+        self.current_time = 0
+        self.temp_time = 0
+        self.total_time = 0
+        self.completed_tasks_list = []
+        self.ongoing_tasks_list = []
+        self.todo_tasks_list = []
+        self.headers = []
+        self.temp = []
+        self.table = []
+        self.max = 0
+        self.list_all = []
+        self.count = 0
+        self.max_len1 = 0
+        self.max_len2 = 0
+        self.max_len3 = 0
+        self.list_todo = []
+        self.list_ongoing = []
+        self.list_complete = []
+        self.item1 = ''
+        self.item2 = ''
+        self.item3 = ''
+                
         
+    def get_max_len(self,alist):
+        
+        for item in alist:
+            self.max = 0
+            if len(item['task_name']) > self.max:
+                self.max = len(item['task_name'])
+            return self.max 
+
+    def get_max_len2(self,alist,pos):
+        
+        for item in alist:
+            self.max = 0
+            if len(item[pos]) > self.max:
+                self.max = len(item[pos])
+            return self.max             
+        
+                
         
     def add_task(self,task):
         """Method takes new task name from user and adds to database"""
@@ -24,10 +64,10 @@ class KanBanCommands:
         try:
             self.connection = lite.connect('kanban.db')
             self.cursor = self.connection.cursor()
-            self.cursor.execute('INSERT INTO todo (task_name) VALUES (?)',(self.task,))
+            self.cursor.execute('INSERT INTO todo (task_name,valid) VALUES (?,?)',(self.task,1))
             self.connection.commit() 
             
-            print('\n',self.task ,' was added successfully')
+            print('\n\t',self.task ,' was added successfully')
             
         except Exception as e:
             # rollback in case of errors
@@ -37,13 +77,7 @@ class KanBanCommands:
 
         finally:
             self.connection.close()
-            
-    """       self.table1 = "CREATE TABLE IF NOT EXISTS todo (task_id INTEGER PRIMARY KEY,task_name TEXT)"
-     self.table2 = "CREATE TABLE IF NOT EXISTS doing (row_id INTEGER PRIMARY KEY,taskID INT,task_name TEXT,time_in TEXT)"
-     self.table3 = "CREATE TABLE IF NOT EXISTS done (row_id INTEGER PRIMARY KEY,taskId INT,task_name TEXT,time_out TEXT)"
-    """     
-                
-        
+         
     def move_to_doing(self,task_id):
         """Method takes existing task id and
            moves associated task from 
@@ -73,33 +107,152 @@ class KanBanCommands:
         finally:
             self.connection.close()
         
-        # if task id is valid, insert task into table doing   
+        # if task id is valid, check whether exists in table doing   
         if self.task:
+        
+            try:
+                self.connection = lite.connect('kanban.db')
+                self.connection.row_factory = lite.Row
+                self.cursor = self.connection.cursor()
+                self.cursor.execute('SELECT * FROM doing WHERE taskID = ?',(self.taskID,))
+                self.rows = self.cursor.fetchone()
+                
+                if self.rows:
+                    print('\n\t',self.task ,'with ID ',self.taskID,' is already in doing list')
+                    self.task = ''
+            except Exception as e:
+               
+                print(e,"\nPlease try again")
+                  
+            finally:
+                self.connection.close()
             
-            self.time_in = time.time()    
+            if self.task:
+            
+                self.time_in = str(time.time()) 
+
+                
+                try:
+                    self.connection = lite.connect('kanban.db')
+                    self.cursor = self.connection.cursor()
+                    self.cursor.execute('INSERT INTO doing (taskID,task_name,time_in) VALUES (?,?,?)',(self.taskID,self.task,self.time_in))
+                    self.row_count = self.cursor.rowcount
+                    self.connection.commit()
+                    
+                except Exception as e:
+                   
+                    print("\nPlease try again-2")
+
+                finally:
+                    self.connection.close()
+
+                # if insertion into table doing was successfull, 
+                # update task status in table todo 
+                if self.row_count:
+                 
+                    self.row_count = 0       
+                    try:
+                        self.connection = lite.connect('kanban.db')
+                        self.cursor = self.connection.cursor()
+                        self.cursor.execute('UPDATE todo SET valid = ? WHERE task_id = ?',(0,self.taskID))
+                        self.connection.commit()
+                        self.row_count = self.cursor.rowcount
+
+                    except Exception as e:
+                       
+                        print("\nPlease try again")
+                            
+                    finally:
+                        self.connection.close()
+                    
+                    # if success, display success message            
+                    if self.row_count:
+                        print('\n\t',self.task, ' with id ',self.taskID,' was added to the ongoing tasks')            
+
+                        
+        
+    def move_to_done(self,task_id):
+        """Method takes existing task id and
+           moves associated task from 
+           table doing to table done
+        """
+
+        # ensure that i'm working with an int 
+        self.taskID = int(str(task_id).strip())
+        
+        # check if the task id from user exists in table doing
+        try:
+            self.connection = lite.connect('kanban.db')
+            self.connection.row_factory = lite.Row
+            self.cursor = self.connection.cursor()
+            self.cursor.execute('SELECT * FROM doing WHERE taskID = ?',(self.taskID,))
+            self.rows = self.cursor.fetchone() 
+            
+            if self.rows:
+                self.task = self.rows['task_name']
+                self.time_in = self.rows['time_in']
+            else:
+                print('\n\t\t Invalid ID - Please use list doing command to see valid task IDs')
+            
+        except Exception as e:
+           
+            print(e,"\nPlease try again")
+              
+        finally:
+            self.connection.close()
+        
+        # if task id is valid, cinsert into table done   
+
+        if self.task:
+        
+            self.current_time = time.time()
+            
+            # current timestamp - time_in timestamp
+            self.total_time = self.current_time - float(self.time_in)
+            self.total_time = str(self.total_time).split('.')[0]
+            self.total_time = int(self.total_time)
+            
+            # format time taken depending on duration
+            if self.total_time < 60:
+                self.total_time = str(self.total_time) + ' Seconds'
+            elif self.total_time > 60 and self.total_time < 3600:
+                self.total_time = self.total_time//60 
+                if self.total_time > 1:
+                    self.total_time = str(self.total_time) + ' Minutes'                    
+                else:
+                    self.total_time = str(self.total_time) + ' Minute'
+            else:
+                self.total_time = self.total_time//3600
+                if self.total_time > 1:
+                    self.total_time = str(self.total_time) + ' Days'                    
+                else:
+                    self.total_time = str(self.total_time) + ' Day'
+                
             try:
                 self.connection = lite.connect('kanban.db')
                 self.cursor = self.connection.cursor()
-                self.cursor.execute('INSERT INTO doing (taskID,task_name,time_in) VALUES (?,?,?)',(self.taskID,self.task,self.time_in))
+                self.cursor.execute('INSERT INTO done (taskId,task_name,time_out) VALUES (?,?,?)',(self.taskID,self.task,self.total_time))
                 self.row_count = self.cursor.rowcount
+                self.connection.commit()
+
             except Exception as e:
                
-                print("\nPlease try again-2")
+                print("\nPlease try again")
 
             finally:
                 self.connection.close()
 
-        # if insertion into table doing was successfull, delete task from table todo 
+        # if insertion into table done was successfull, delete task from table doing 
         if self.row_count:
          
             self.row_count = 0       
             try:
                 self.connection = lite.connect('kanban.db')
                 self.cursor = self.connection.cursor()
-                self.cursor.execute('DELETE FROM todo WHERE task_id = ?',(self.taskID,))
+                self.cursor.execute('DELETE FROM doing WHERE taskID = ?',(self.taskID,))
                 self.connection.commit()
                 self.row_count = self.cursor.rowcount
-
+                
             except Exception as e:
                
                 print("\nPlease try again")
@@ -109,32 +262,129 @@ class KanBanCommands:
             
             # if success, display success message            
             if self.row_count:
-                print('\n',self.task, ' with id ',self.taskID,' was added to the ongoing tasks')            
+                print('\n\t',self.task, ' with id ',self.taskID,' was added to the completed tasks list')
+      
 
-                        
-        
-    def move_to_done(self,task_id):
-        print(task_id," was added to done") 
-
-    def show_todo_tasks(self):
-        """Method displays pending tasks"""
+    def fetch_todo_tasks(self):
+        """Method fetches all pending tasks and returns
+           them in a list or False if none"""
         
         try:
             self.connection = lite.connect('kanban.db')
             self.connection.row_factory = lite.Row
             self.cursor = self.connection.cursor()
-            self.cursor.execute('SELECT * FROM todo')
+            self.cursor.execute('SELECT * FROM todo WHERE valid = 1')
             self.rows = self.cursor.fetchall()
             
+            if self.rows:
             
-            print("\n\n\t\t\tTask ID\t|\tTask name")
-            print('\t\t\t-------------------------------------------')
-            
-            for row in self.rows:
-                print('\t\t\t',row['task_id'],'\t|\t',row['task_name'])
-                print('\t\t\t-------------------------------------------')
+                for row in self.rows: 
+                    self.todo_tasks_list.append( {'task_id':row['task_id'],
+                                                  'task_name':row['task_name']}
+                                                )
+                return self.todo_tasks_list 
+               
+            else:
+                return False 
+         
         except Exception as e:
-            self.connection.rollback() 
+            
+            print("\nPlease try again")
+
+        finally:
+            self.connection.close()
+
+      
+                
+    def fetch_ongoing_tasks(self):
+
+        """Method fetches all ongoing tasks and returns 
+           in a list or False if none"""
+        
+        try:
+            self.connection = lite.connect('kanban.db')
+            self.connection.row_factory = lite.Row
+            self.cursor = self.connection.cursor()
+            self.cursor.execute('SELECT * FROM doing')
+            self.rows = self.cursor.fetchall()
+            
+            if self.rows:
+               
+               for row in self.rows: 
+                    self.ongoing_tasks_list.append( {'taskID':row['taskID'], 
+                                                       'task_name':row['task_name'],
+                                                       'time_in':row['time_in']}
+                                                    )
+               return self.ongoing_tasks_list                     
+            else:
+                return False     
+                
+        except Exception as e:
+            
+            print("\nPlease try again")
+
+        finally:
+            self.connection.close()     
+                
+    
+    def fetch_completed_tasks(self):
+
+        """Method fetches all completed tasks and returns in a list
+           or returns False if none
+        """ 
+        
+        try:
+            self.connection = lite.connect('kanban.db')
+            self.connection.row_factory = lite.Row
+            self.cursor = self.connection.cursor()
+            self.cursor.execute('SELECT * FROM done')
+            self.rows = self.cursor.fetchall()
+            
+            if self.rows:            
+                
+                for row in self.rows:
+                    self.completed_tasks_list.append( {'taskId':row['taskId'],
+                                                       'task_name':row['task_name'],
+                                                       'time_out':row['time_out']}
+                                                    )
+                return self.completed_tasks_list                     
+            else:
+                return False            
+                
+        except Exception as e:
+            
+            print("\nPlease try again")
+
+        finally:
+            self.connection.close() 
+                
+                
+
+    def show_todo_tasks(self):
+        """Method displays pending tasks"""
+        
+        try:
+            
+            # returns a list of all todo tasks or False if none
+            self.rows = self.fetch_todo_tasks()
+            
+            if self.rows:
+                
+                
+                print("\n\t\t\tTASK ID\t|\tTASK NAME")
+                print('\t\t\t-------------------------------------------')
+                
+                
+                for row in self.rows:
+                    print('\t\t\t',row['task_id'],'\t|\t',row['task_name'])
+                    print('\t\t\t-------------------------------------------')
+                  
+                self.rows.clear() 
+              
+            else:
+                print('\n\tThere are no pending tasks in the todo list')
+                
+        except Exception as e:
             
             print("\nPlease try again")
 
@@ -143,14 +393,193 @@ class KanBanCommands:
             
         
     def show_ongoing_tasks(self):
-        print("Showing ongoing tasks") 
+        """Method displays ongoing tasks"""
+
+        # returns list of all ongoing tasks
+        self.rows = self.fetch_ongoing_tasks()
+        
+        self.max = self.get_max_len(self.rows) 
+        
+        if self.rows:
+                    
+            print("\n\n\tTask ID\t|\tTask name\t\t|\tTime taken")
+            print('\t-------------------------------------------------------------------')
+            
+            self.current_time = time.time()
+          
+            for row in self.rows:
+
+                # current timestamp - time_in timestamp
+                self.temp_time = self.current_time - float(row['time_in'])
+                self.temp_time = str(self.temp_time).split('.')[0]
+                self.temp_time = int(self.temp_time)
+                
+                if self.temp_time < 60:
+                    self.temp_time = str(self.temp_time) + ' Seconds'
+                elif self.temp_time > 60 and self.temp_time < 3600:
+                    self.temp_time = self.temp_time//60 
+                    if self.temp_time > 1:
+                        self.temp_time = str(self.temp_time) + ' Minutes'                    
+                    else:
+                        self.temp_time = str(self.temp_time) + ' Minute'
+                else:
+                    self.temp_time = self.temp_time//3600
+                    if self.temp_time > 1:
+                        self.temp_time = str(self.temp_time) + ' Days'                    
+                    else:
+                        self.temp_time = str(self.temp_time) + ' Day'
+                        
+                print('\t',row['taskID'],'\t|\t',row['task_name'].ljust(self.max),'\t|\t',self.temp_time)
+                print('\t-------------------------------------------------------------------')
+                
+            self.rows.clear()
+            
+        else:
+            print('\n\tThere are no pending tasks in the ongoing tasks list')            
+                
+
+
 
     def show_completed_tasks(self):
-        print("Showing completed tasks")         
+        """Method displays all completed tasks"""
+        
+        # returns a list of completed tasks or False if none
+        self.rows = self.fetch_completed_tasks()
+        self.max = self.get_max_len(self.rows)
+        
+        if self.rows:            
+            print("\n\n\tTask ID\t|\tTask name\t\t\t|\tTime taken")
+            print('\t---------------------------------------------------------------------')
+          
+            for row in self.rows:
+
+                        
+                print('\t',row['taskId'],'\t|\t',row['task_name'].ljust(self.max),'\t|\t',row['time_out'])
+                print('\t---------------------------------------------------------------------')
+                
+            self.rows.clear()    
+        else:
+            print('There are currently no tasks in the completed tasks list')            
+                
+ 
 
     def show_all_tasks(self):
-        print("Showing all tasks") 
+        """Method displays the whole kanban board of todo
+           doing and done tasks"""
+        
+        self.completed_tasks_list = self.fetch_completed_tasks()
+        self.ongoing_tasks_list = self.fetch_ongoing_tasks()
+        self.todo_tasks_list = self.fetch_todo_tasks()
+        
+        for item in self.todo_tasks_list:
+            self.list_todo.append(item['task_name'])
+        
+        for item in self.ongoing_tasks_list:
+            self.list_ongoing.append(item['task_name'])
+            
+        for item in self.completed_tasks_list:
+            self.list_complete.append(item['task_name'])
+            
+            
+        # get length of largest list
+        self.max = max(len(self.list_todo),len(self.list_ongoing),len(self.list_complete))
+        
+        # create new list of all tasks from the 3 lists
+        if len(self.list_todo) < self.max:
+            
+            # extract from list todo
+            for item in self.list_todo:
+                
+                self.list_all.append([item])
+                
+            for i in range(self.max-len(self.list_todo)):
+                self.list_all.append(['none'])
+                
+        else:
+            for item in self.list_todo:
+                self.list_all.append([item]) 
+                
+
+        if len(self.list_ongoing) < self.max:
+            
+            # extract from list doing
+            self.count = 0
+            for item in self.list_ongoing:
+                self.list_all[self.count].insert(1,item)
+                self.count+=1
+                
+            
+            for i in range(self.max-len(self.list_ongoing)):
+                self.list_all[self.count].insert(1,'none')
+                self.count+=1
+        else:
+            self.count = 0
+            for item in self.list_ongoing:
+                self.list_all[self.count].insert(1,item)
+                self.count+=1  
+                
+
+        if len(self.list_complete) < self.max:
+            
+            # extract from list done
+            self.count = 0
+            for item in self.list_complete:
+                self.list_all[self.count].insert(2,item)
+                self.count+=1
+                
+                
+            for i in range(self.max-len(self.list_complete)):
+                self.list_all[self.count].insert(2,'none')
+                self.count+=1
+                
+        else:
+            self.count = 0
+            for item in self.list_complete:
+                self.list_all[self.count].insert(2,item)
+                self.count+=1                 
+        
+        # empty the lists 
+        self.list_todo.clear()
+        self.list_ongoing.clear()
+        self.list_complete.clear()
+        
+        # get length of longest string in list
+        # for purpooses of display
+        self.max_len1 = self.get_max_len2(self.list_all,0)
+        self.max_len2 = self.get_max_len2(self.list_all,1)
+        self.max_len3 = self.get_max_len2(self.list_all,2) 
+        
+        
+        
+        print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t|\tDONE TASKS")
+        print('\t---------------------------------------------------------------------------') 
+        
+        
+        
+        for item in self.list_all:
+            
+            if item[0] == 'none':
+                self.item1 = ''
+            else:
+                self.item1 = item[0]
+                
+            if item[1] == 'none':
+                self.item2 = ''
+            else:
+                self.item2 = item[1]    
+
+            if item[2] == 'none':
+                self.item3 = ''
+            else:
+                self.item3 = item[2]    
+                
+            print('\t',self.item1.ljust(self.max_len1),'\t|',self.item2.ljust(self.max_len2),'\t|',self.item3.ljust(self.max_len3))
+            print('\t---------------------------------------------------------------------------')
+                
+        self.list_all.clear()         
+                
 
     def show_version(self):
-        print("1.0")  
+        print("1.0")        
+            
       
