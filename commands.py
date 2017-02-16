@@ -181,6 +181,8 @@ class KanBanCommands:
 
         # ensure that i'm working with an int 
         self.taskID = int(str(task_id).strip())
+        self.rows = None
+        self.task = ''
         
         # check if the task id from user exists in table doing
         try:
