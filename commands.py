@@ -559,8 +559,8 @@ class KanBanCommands:
             
             
             
-            print("\n\n\t\tTODO TASKS\t\t|\tDOING TASKS\t\t|\tDONE TASKS")
-            print('\t---------------------------------------------------------------------------') 
+            print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t\t|\tDONE TASKS")
+            print('\t----------------------------------------------------------------------------------') 
             
             
             
@@ -582,7 +582,7 @@ class KanBanCommands:
                     self.item3 = item[2]    
                     
                 print('\t',self.item1.ljust(self.max_len1),'\t|',self.item2.ljust(self.max_len2),'\t|',self.item3.ljust(self.max_len3))
-                print('\t---------------------------------------------------------------------------')
+                print('\t----------------------------------------------------------------------------------')
                     
             self.list_all.clear()  
         else:
