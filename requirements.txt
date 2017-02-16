@@ -1,0 +1,7 @@
+
+This application is built with Python 3.6
+
+It has no external dependencies
+
+All the application functionality is self contained, 
+does not use external libraries or frameworks
