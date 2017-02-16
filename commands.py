@@ -40,20 +40,22 @@ class KanBanCommands:
                 
         
     def get_max_len(self,alist):
-        
+            
+        self.max = 0
         for item in alist:
-            self.max = 0
+            
             if len(item['task_name']) > self.max:
                 self.max = len(item['task_name'])
-            return self.max 
+        return self.max 
 
     def get_max_len2(self,alist,pos):
-        
+            
+        self.max = 0
         for item in alist:
-            self.max = 0
+            
             if len(item[pos]) > self.max:
                 self.max = len(item[pos])
-            return self.max             
+        return self.max             
         
                 
         
@@ -274,6 +276,7 @@ class KanBanCommands:
             self.connection.row_factory = lite.Row
             self.cursor = self.connection.cursor()
             self.cursor.execute('SELECT * FROM todo WHERE valid = 1')
+            self.connection.commit()
             self.rows = self.cursor.fetchall()
             
             if self.rows:
@@ -285,7 +288,7 @@ class KanBanCommands:
                 return self.todo_tasks_list 
                
             else:
-                return False 
+                return [] 
          
         except Exception as e:
             
@@ -317,7 +320,7 @@ class KanBanCommands:
                                                     )
                return self.ongoing_tasks_list                     
             else:
-                return False     
+                return []     
                 
         except Exception as e:
             
@@ -349,7 +352,7 @@ class KanBanCommands:
                                                     )
                 return self.completed_tasks_list                     
             else:
-                return False            
+                return []            
                 
         except Exception as e:
             
@@ -363,46 +366,41 @@ class KanBanCommands:
     def show_todo_tasks(self):
         """Method displays pending tasks"""
         
-        try:
+        # returns a list of all todo tasks or False if none
+        self.rows = []
+        self.rows = self.fetch_todo_tasks()
             
-            # returns a list of all todo tasks or False if none
-            self.rows = self.fetch_todo_tasks()
+        if type(self.rows) is list and len(self.rows) > 0:
             
-            if self.rows:
-                
-                
-                print("\n\t\t\tTASK ID\t|\tTASK NAME")
+            
+            print("\n\t\t\tTASK ID\t|\tTASK NAME")
+            print('\t\t\t-------------------------------------------')
+            
+            
+            for row in self.rows:
+                print('\t\t\t',row['task_id'],'\t|\t',row['task_name'])
                 print('\t\t\t-------------------------------------------')
-                
-                
-                for row in self.rows:
-                    print('\t\t\t',row['task_id'],'\t|\t',row['task_name'])
-                    print('\t\t\t-------------------------------------------')
-                  
-                self.rows.clear() 
               
-            else:
-                print('\n\tThere are no pending tasks in the todo list')
+         
+          
+        else:
+            print('\n\tThere are no pending tasks in the todo list')
                 
-        except Exception as e:
-            
-            print("\nPlease try again")
-
-        finally:
-            self.connection.close()
+        self.rows.clear()
             
         
     def show_ongoing_tasks(self):
         """Method displays ongoing tasks"""
 
         # returns list of all ongoing tasks
+        self.rows = []
         self.rows = self.fetch_ongoing_tasks()
         
-        self.max = self.get_max_len(self.rows) 
+        if type(self.rows) is list and len(self.rows) > 0:
+            self.max = self.get_max_len(self.rows) 
         
-        if self.rows:
-                    
-            print("\n\n\tTask ID\t|\tTask name\t\t|\tTime taken")
+        
+            print("\n\n\tTask ID\t|\tTask name\t\t\t|\tTime taken")
             print('\t-------------------------------------------------------------------')
             
             self.current_time = time.time()
@@ -432,22 +430,25 @@ class KanBanCommands:
                 print('\t',row['taskID'],'\t|\t',row['task_name'].ljust(self.max),'\t|\t',self.temp_time)
                 print('\t-------------------------------------------------------------------')
                 
-            self.rows.clear()
+        
             
         else:
             print('\n\tThere are no pending tasks in the ongoing tasks list')            
                 
-
+        self.rows.clear()
 
 
     def show_completed_tasks(self):
         """Method displays all completed tasks"""
         
         # returns a list of completed tasks or False if none
+        self.rows = []
         self.rows = self.fetch_completed_tasks()
-        self.max = self.get_max_len(self.rows)
         
-        if self.rows:            
+        if self.rows:
+            self.max = self.get_max_len(self.rows)
+        
+                   
             print("\n\n\tTask ID\t|\tTask name\t\t\t|\tTime taken")
             print('\t---------------------------------------------------------------------')
           
@@ -457,10 +458,11 @@ class KanBanCommands:
                 print('\t',row['taskId'],'\t|\t',row['task_name'].ljust(self.max),'\t|\t',row['time_out'])
                 print('\t---------------------------------------------------------------------')
                 
-            self.rows.clear()    
-        else:
-            print('There are currently no tasks in the completed tasks list')            
                 
+        else:
+            print('\n\tThere are currently no tasks in the completed tasks list')            
+        
+        self.rows.clear()        
  
 
     def show_all_tasks(self):
@@ -471,112 +473,122 @@ class KanBanCommands:
         self.ongoing_tasks_list = self.fetch_ongoing_tasks()
         self.todo_tasks_list = self.fetch_todo_tasks()
         
-        for item in self.todo_tasks_list:
-            self.list_todo.append(item['task_name'])
-        
-        for item in self.ongoing_tasks_list:
-            self.list_ongoing.append(item['task_name'])
+        if (self.completed_tasks_list and
+            self.ongoing_tasks_list and
+            self.todo_tasks_list):
             
-        for item in self.completed_tasks_list:
-            self.list_complete.append(item['task_name'])
+            self.list_todo.clear()
+            self.list_ongoing.clear()
+            self.list_complete.clear()
             
+            for item in self.todo_tasks_list:
+                self.list_todo.append(item['task_name'])
             
-        # get length of largest list
-        self.max = max(len(self.list_todo),len(self.list_ongoing),len(self.list_complete))
-        
-        # create new list of all tasks from the 3 lists
-        if len(self.list_todo) < self.max:
+            for item in self.ongoing_tasks_list:
+                self.list_ongoing.append(item['task_name'])
+                
+            for item in self.completed_tasks_list:
+                self.list_complete.append(item['task_name'])
+                
+                
+            # get length of largest list
+            self.max = max(len(self.list_todo),len(self.list_ongoing),len(self.list_complete))
             
-            # extract from list todo
-            for item in self.list_todo:
+            # create new list of all tasks from the 3 lists
+            if len(self.list_todo) < self.max:
                 
-                self.list_all.append([item])
-                
-            for i in range(self.max-len(self.list_todo)):
-                self.list_all.append(['none'])
-                
-        else:
-            for item in self.list_todo:
-                self.list_all.append([item]) 
-                
-
-        if len(self.list_ongoing) < self.max:
-            
-            # extract from list doing
-            self.count = 0
-            for item in self.list_ongoing:
-                self.list_all[self.count].insert(1,item)
-                self.count+=1
-                
-            
-            for i in range(self.max-len(self.list_ongoing)):
-                self.list_all[self.count].insert(1,'none')
-                self.count+=1
-        else:
-            self.count = 0
-            for item in self.list_ongoing:
-                self.list_all[self.count].insert(1,item)
-                self.count+=1  
-                
-
-        if len(self.list_complete) < self.max:
-            
-            # extract from list done
-            self.count = 0
-            for item in self.list_complete:
-                self.list_all[self.count].insert(2,item)
-                self.count+=1
-                
-                
-            for i in range(self.max-len(self.list_complete)):
-                self.list_all[self.count].insert(2,'none')
-                self.count+=1
-                
-        else:
-            self.count = 0
-            for item in self.list_complete:
-                self.list_all[self.count].insert(2,item)
-                self.count+=1                 
-        
-        # empty the lists 
-        self.list_todo.clear()
-        self.list_ongoing.clear()
-        self.list_complete.clear()
-        
-        # get length of longest string in list
-        # for purpooses of display
-        self.max_len1 = self.get_max_len2(self.list_all,0)
-        self.max_len2 = self.get_max_len2(self.list_all,1)
-        self.max_len3 = self.get_max_len2(self.list_all,2) 
-        
-        
-        
-        print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t|\tDONE TASKS")
-        print('\t---------------------------------------------------------------------------') 
-        
-        
-        
-        for item in self.list_all:
-            
-            if item[0] == 'none':
-                self.item1 = ''
+                # extract from list todo
+                for item in self.list_todo:
+                    
+                    self.list_all.append([item])
+                    
+                for i in range(self.max-len(self.list_todo)):
+                    self.list_all.append(['none'])
+                    
             else:
-                self.item1 = item[0]
-                
-            if item[1] == 'none':
-                self.item2 = ''
-            else:
-                self.item2 = item[1]    
+                for item in self.list_todo:
+                    self.list_all.append([item]) 
+                    
 
-            if item[2] == 'none':
-                self.item3 = ''
+            if len(self.list_ongoing) < self.max:
+                
+                # extract from list doing
+                self.count = 0
+                for item in self.list_ongoing:
+                    self.list_all[self.count].insert(1,item)
+                    self.count+=1
+                    
+                
+                for i in range(self.max-len(self.list_ongoing)):
+                    self.list_all[self.count].insert(1,'none')
+                    self.count+=1
             else:
-                self.item3 = item[2]    
+                self.count = 0
+                for item in self.list_ongoing:
+                    self.list_all[self.count].insert(1,item)
+                    self.count+=1  
+                    
+
+            if len(self.list_complete) < self.max:
                 
-            print('\t',self.item1.ljust(self.max_len1),'\t|',self.item2.ljust(self.max_len2),'\t|',self.item3.ljust(self.max_len3))
-            print('\t---------------------------------------------------------------------------')
+                # extract from list done
+                self.count = 0
+                for item in self.list_complete:
+                    self.list_all[self.count].insert(2,item)
+                    self.count+=1
+                    
+                    
+                for i in range(self.max-len(self.list_complete)):
+                    self.list_all[self.count].insert(2,'none')
+                    self.count+=1
+                    
+            else:
+                self.count = 0
+                for item in self.list_complete:
+                    self.list_all[self.count].insert(2,item)
+                    self.count+=1                 
+            
+            # empty the lists 
+            self.list_todo.clear()
+            self.list_ongoing.clear()
+            self.list_complete.clear()
+            
+            # get length of longest string in list
+            # for purpooses of display
+            self.max_len1 = self.get_max_len2(self.list_all,0)
+            self.max_len2 = self.get_max_len2(self.list_all,1)
+            self.max_len3 = self.get_max_len2(self.list_all,2) 
+            
+            
+            
+            print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t\t|\tDONE TASKS")
+            print('\t---------------------------------------------------------------------------') 
+            
+            
+            
+            for item in self.list_all:
                 
-        self.list_all.clear()         
+                if item[0] == 'none':
+                    self.item1 = ''
+                else:
+                    self.item1 = item[0]
+                    
+                if item[1] == 'none':
+                    self.item2 = ''
+                else:
+                    self.item2 = item[1]    
+
+                if item[2] == 'none':
+                    self.item3 = ''
+                else:
+                    self.item3 = item[2]    
+                    
+                print('\t',self.item1.ljust(self.max_len1),'\t|',self.item2.ljust(self.max_len2),'\t|',self.item3.ljust(self.max_len3))
+                print('\t---------------------------------------------------------------------------')
+                    
+            self.list_all.clear()  
+        else:
+            print('\n\tSome lists are not populated, please populate the lists first')        
                 
 
     def show_version(self):
