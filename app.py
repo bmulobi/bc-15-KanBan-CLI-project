@@ -77,7 +77,7 @@ class Dispatch:
 
             try:
                 # if command is todo(add_task), set associated flag to true
-                if re.match('^todo\s{1}\w+$',self.prompt) != None:
+                if re.match('^todo\s{1}[\w\s]+$',self.prompt) != None:
                     self.todo_tasks = True
                     
                 # if command is doing(add task to ongoing list), set associated flag to true    
@@ -172,5 +172,4 @@ obj = Dispatch()
 obj.display_menu()
 obj.create_database()
 obj.filter_commands()
-    
     
