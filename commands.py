@@ -402,7 +402,7 @@ class KanBanCommands:
             self.max = self.get_max_len(self.rows) 
         
         
-            print("\n\n\tTask ID\t|\tTask name\t\t\t|\tTime taken")
+            print("\n\n\tTask ID\t|\tTask name\t\t|\tTime taken")
             print('\t-------------------------------------------------------------------')
             
             self.current_time = time.time()
@@ -561,7 +561,7 @@ class KanBanCommands:
             
             
             
-            print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t\t|\tDONE TASKS")
+            print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t|\tDONE TASKS")
             print('\t----------------------------------------------------------------------------------') 
             
             
