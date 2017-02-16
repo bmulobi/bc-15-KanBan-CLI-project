@@ -270,7 +270,7 @@ class KanBanCommands:
     def fetch_todo_tasks(self):
         """Method fetches all pending tasks and returns
            them in a list or False if none"""
-        
+        self.todo_tasks_list = []
         try:
             self.connection = lite.connect('kanban.db')
             self.connection.row_factory = lite.Row
@@ -303,7 +303,7 @@ class KanBanCommands:
 
         """Method fetches all ongoing tasks and returns 
            in a list or False if none"""
-        
+        self.ongoing_tasks_list = []
         try:
             self.connection = lite.connect('kanban.db')
             self.connection.row_factory = lite.Row
@@ -335,7 +335,7 @@ class KanBanCommands:
         """Method fetches all completed tasks and returns in a list
            or returns False if none
         """ 
-        
+        self.completed_tasks_list = []
         try:
             self.connection = lite.connect('kanban.db')
             self.connection.row_factory = lite.Row
@@ -469,6 +469,13 @@ class KanBanCommands:
         """Method displays the whole kanban board of todo
            doing and done tasks"""
         
+        self.completed_tasks_list = []
+        self.ongoing_tasks_list = []
+        self.todo_tasks_list = []
+        self.list_todo = []
+        self.list_ongoing = []
+        self.list_complete = []
+        
         self.completed_tasks_list = self.fetch_completed_tasks()
         self.ongoing_tasks_list = self.fetch_ongoing_tasks()
         self.todo_tasks_list = self.fetch_todo_tasks()
@@ -476,10 +483,6 @@ class KanBanCommands:
         if (self.completed_tasks_list and
             self.ongoing_tasks_list and
             self.todo_tasks_list):
-            
-            self.list_todo.clear()
-            self.list_ongoing.clear()
-            self.list_complete.clear()
             
             for item in self.todo_tasks_list:
                 self.list_todo.append(item['task_name'])
@@ -548,11 +551,6 @@ class KanBanCommands:
                     self.list_all[self.count].insert(2,item)
                     self.count+=1                 
             
-            # empty the lists 
-            self.list_todo.clear()
-            self.list_ongoing.clear()
-            self.list_complete.clear()
-            
             # get length of longest string in list
             # for purpooses of display
             self.max_len1 = self.get_max_len2(self.list_all,0)
@@ -561,7 +559,7 @@ class KanBanCommands:
             
             
             
-            print("\n\n\t\tTODO TASKS\t|\tDOING TASKS\t\t|\tDONE TASKS")
+            print("\n\n\t\tTODO TASKS\t\t|\tDOING TASKS\t\t|\tDONE TASKS")
             print('\t---------------------------------------------------------------------------') 
             
             
