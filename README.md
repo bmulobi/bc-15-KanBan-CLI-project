@@ -6,13 +6,20 @@ The kanban board has got three sections - todo,doing and done sections
 
 # The application uses seven commands as follows:
 
-The user can add a new task with the todo <taskname> command
-The user can move a task from todo to doing with the doing <taskid> command
-The user can move a task from doing to done with the done <taskid> command
-The user can list tasks in the todo section with the list todo command
-The user can list tasks in the doing section with the list doing command
-The user can list tasks in the done section with the list done command
-The user can list tasks in all sections with the list all command
+The user can add a new task with the todo <taskname> command  
+
+The user can move a task from todo to doing with the doing <taskid> command  
+
+The user can move a task from doing to done with the done <taskid> command  
+
+The user can list tasks in the todo section with the list todo command  
+
+The user can list tasks in the doing section with the list doing command  
+
+The user can list tasks in the done section with the list done command  
+
+The user can list tasks in all sections with the list all command  
+
 
 
 This application is built with Python 3.6
