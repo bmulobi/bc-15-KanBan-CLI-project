@@ -375,13 +375,13 @@ class KanBanCommands:
         if type(self.rows) is list and len(self.rows) > 0:
             
             
-            print("\n\t\t\tTASK ID\t|\tTASK NAME")
-            print('\t\t\t-------------------------------------------')
+            print("\n\tTASK ID\t|\tTASK NAME")
+            print('\t-------------------------------------------')
             
             
             for row in self.rows:
-                print('\t\t\t',row['task_id'],'\t|\t',row['task_name'])
-                print('\t\t\t-------------------------------------------')
+                print('\t',row['task_id'],'\t|\t',row['task_name'])
+                print('\t-------------------------------------------')
               
          
           
@@ -425,9 +425,9 @@ class KanBanCommands:
                 else:
                     self.temp_time = self.temp_time//3600
                     if self.temp_time > 1:
-                        self.temp_time = str(self.temp_time) + ' Days'                    
+                        self.temp_time = str(self.temp_time) + ' Hours'                    
                     else:
-                        self.temp_time = str(self.temp_time) + ' Day'
+                        self.temp_time = str(self.temp_time) + ' Hour'
                         
                 print('\t',row['taskID'],'\t|\t',row['task_name'].ljust(self.max),'\t|\t',self.temp_time)
                 print('\t-------------------------------------------------------------------')
@@ -561,7 +561,7 @@ class KanBanCommands:
             
             
             
-            print("\n\n\tTODO TASKS\t\t|\tDOING TASKS\t\t|\tDONE TASKS")
+            print("\n\n\t\tTODO TASKS\t\t|\tDOING TASKS\t\t|\tDONE TASKS")
             print('\t----------------------------------------------------------------------------------') 
             
             
